@@ -1,58 +1,59 @@
-import React, {useState, useEffect, useContext} from "react"
-import { BigTitle } from "../components/BigTitle"
-import { Navbar } from '../components/Navbar'
-import { Footer } from '../components/Footer'
-import { useHttp } from "../hooks/http.hooks"
-import { AuthContext } from '../contexts/AuthContext'
-
+import React, { useState, useEffect, useContext } from "react";
+import { BigTitle } from "../components/BigTitle";
+import { Navbar } from "../components/Navbar";
+import { Footer } from "../components/Footer";
+import { useHttp } from "../hooks/http.hooks";
+import { useDispatch } from "react-redux";
+import { authActions } from "../redux/slices/authSlice";
 
 export const DashBoard = (props) => {
+	const { request } = useHttp();
+	const dispatch = useDispatch();
 
-    const { request } = useHttp()
-    const auth = useContext(AuthContext)
+	const [user, setUser] = useState({
+		name: "",
+		mail: "",
+	});
 
-    const [user, setUser] = useState({
-        name: '',
-        mail: '',
-    })
+	if (props.user) {
+		setUser({
+			...user,
+			name: props.name,
+			mail: props.mail,
+		});
+	}
 
-    if (props.user) {
-        setUser({
-            ...user,
-            name: props.name,
-            mail: props.mail
-        })
-    }
+	useEffect(() => {
+		setTimeout(async () => {
+			const data = JSON.parse(localStorage.getItem("userData"));
+			const userData = await request("/api/user/info?userId=" + data.userId);
 
-    useEffect( async () => {
+			if (userData) {
+				setUser({
+					...user,
+					name: userData.name,
+					mail: userData.login,
+				});
+			}
+		}, 500);
+	}, []);
 
-        const data = JSON.parse(localStorage.getItem('userData'))
-        console.log(data.userId)
-        const userData = await request('/api/user/info?userId=' + data.userId)
+	const handleLogout = () => {
+		dispatch(authActions.setAuth());
+		localStorage.clear("userData");
+	};
 
-        setUser({
-            ...user,
-            name: userData.name,
-            mail: userData.login
-        })
-
-    }, [])
-
-    return(
-        <div className="dashboard">
-            <Navbar />
-            <div className="">
-                <BigTitle title={'Личный кабинет'} />
-                <BigTitle title={user.name} />
-                <div className="logout-button">
-                    <button onClick={() => {
-                        auth.logout()
-                    }}>Выйти</button>
-                </div>
-            </div>
-            <Footer />
-        </div>
-        
-    )
-
-}
+	return (
+		<div className="dashboard">
+			<Navbar />
+			<div className="">
+				<BigTitle title={"Личный кабинет"} />
+				<BigTitle title={user.name} />
+				<div className="logout-button">
+					<button onClick={handleLogout}>Выйти</button>
+				</div>
+			</div>
+			<Footer />
+		</div>
+	);
+};

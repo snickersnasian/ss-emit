@@ -1,25 +1,21 @@
-import React from "react"
-import { useRoutes } from './routes'
-import { useAuth } from './hooks/auth.hook'
-import { AuthContext } from './contexts/AuthContext'
+import React, { useEffect } from "react";
+import { useRoutes } from "./routes";
+import { useSelector, useDispatch } from "react-redux";
+import { authActions } from "./redux/slices/authSlice";
 
 function App() {
+	const dispatch = useDispatch();
 
-  const { login, logout, userId, token } = useAuth()
+	useEffect(() => {
+		const userData = JSON.parse(localStorage.getItem("userData"));
+		dispatch(authActions.setAuth({ ...userData }));
+	}, []);
 
-  const isAuthenticated = !!token
-  // console.log(isAuthenticated)
-  const route = useRoutes(isAuthenticated)
+	const isAuthenticated = !!useSelector((state) => state.auth.isAuthenticated);
 
-  return (
-    <AuthContext.Provider value={{  
-      token, login, logout, userId, isAuthenticated
-    }}>
-      <div>
-        { route }
-      </div>
-    </AuthContext.Provider>
-  );
+	const route = useRoutes(isAuthenticated);
+
+	return <div>{route}</div>;
 }
 
 export default App;
